@@ -15,22 +15,29 @@ from acs.cvrp import run_aco
 #  travel_time_mat:         Matrix containing travel time for all edges                 #
 #  pos_lat:                 Latitude of Depot                                           #
 #  pos_lon:                 Longitude of Depot                                          #
+#  breakTimeStart:          Start of break time                                         #
+#  breakTimeEnd:            End of break time                                           #
+#  endTime:                 End of service time                                         #
 #                                                                                       #
 #  Description of Output Parameters:                                                    #
 #  total_val:               Fitness value of the individual                             #
 #                                                                                       #
 #########################################################################################
-def fitness_func(design_vec,loc_data,distances,travel_time_mat,pos_lat,pos_long):
+def fitness_func(design_vec,loc_data,distances,travel_time_mat,pos_lat,pos_long,breakTimeStart,breakTimeEnd,endTime):
 
     # Intitializing the Variables
-    min_final_penal = max_final_penal = 0
-    max_pop_penalty = 0.1
-    max_iter_penalty = 0.1
+    #min_final_penal = max_final_penal = 0
+    #max_pop_penalty = 0.1
+    #max_iter_penalty = 0.1
     
-    prod = run_aco(loc_data,distances,travel_time_mat,pos_lat,pos_long,design_vec[:7],np.absolute(design_vec[7:9].astype(int)))                  # Calculate the output                         
-
+    prod = run_aco(loc_data,distances,travel_time_mat,pos_lat,pos_long,breakTimeStart,breakTimeEnd,endTime,design_vec[:8],np.absolute(design_vec[8:10].astype(int)))                  # Calculate the output                         
+    
+    # Calculating the total value of output
+    total_val = prod
+    
+    '''
     # Calculating the Hard Constraints
-    for parameter in design_vec[:7]:
+    for parameter in design_vec[:8]:
         
         # Checking if the value in set of parameters is below the minimum limits
         if parameter < 0:                        
@@ -45,10 +52,11 @@ def fitness_func(design_vec,loc_data,distances,travel_time_mat,pos_lat,pos_long)
 
                 # Add the errors for all parameter
                 max_final_penal = max_final_penal + abs(parameter - 1)
-
+    
     # Calculating the total value of output
-    total_val = -prod + min_final_penal + max_final_penal + (max_pop_penalty*design_vec[7]) + (max_iter_penalty*design_vec[8])
-
+    total_val = -prod + min_final_penal + max_final_penal + (max_pop_penalty*design_vec[8]) + (max_iter_penalty*design_vec[9])
+    '''
+    
     # Return the score
     return total_val,
 #---------------------------------------------------------------------------------------#
