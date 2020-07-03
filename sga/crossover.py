@@ -17,7 +17,7 @@ import numpy as np
 ########################################################################################
 def SimulatedBinary(ind1, ind2,q):
 
-    for idx, Pr1, Pr2 in enumerate(zip(ind1, ind2)):
+    for idx, (Pr1, Pr2) in enumerate(zip(ind1, ind2)):
         
         rand_no = np.random.random()
         
