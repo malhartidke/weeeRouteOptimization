@@ -22,7 +22,7 @@ from Distance_calc import distance_calc
 def vehicle_dist(c_id_route,tim_loc_data):
 
 	# Initialize empty table
-	vehicle_table = np.zeros((c_id_route.size,5))
+	vehicle_table = np.zeros((c_id_route.size,6))
 	
 	idx = 0
 
@@ -39,7 +39,7 @@ def vehicle_dist(c_id_route,tim_loc_data):
 			row_copy = np.asarray(np.where(tim_loc_data[:,0] == c_id))[0][0]
 
 			# Copy the obtained data in vehicle table
-			vehicle_table[idx,:] = tim_loc_data[row_copy,(0,3,4,5,6)]
+			vehicle_table[idx,:] = tim_loc_data[row_copy,(0,3,4,5,6,7)]
 
 
 	# Delete all zeros in the vehicle table
@@ -63,25 +63,39 @@ def vehicle_dist(c_id_route,tim_loc_data):
 #                           with depot being the first entry                            #
 #  lat:                     Latitude of Depot                                           #
 #  lon:                     Longitude of Depot                                          #
+#  breakTimeStart:          Start of break time                                         #
+#  breakTimeEnd:            End of break time                                           #
+#  endTime:                 End of service time                                         #
 #  Q:                       Capacity of each vehicle                                    #
 #  min_dist:                Optimistic Distance                                         #
+#  min_time:                Optimistic Time to complete service                         #
 #  total_num_vehicles:      Total number of vehicles                                    #
 #                                                                                       #
 #  Description of Output Parameters:                                                    #
 #  fit_ratio:               Fitness value of the individual                             #
 #                                                                                       #
 #########################################################################################
-def fitness_func(indv,dat,travel_time_matx,dist_matx,lat,lon,Q,min_dist,total_num_vehicles):
+def fitness_func(indv,dat,travel_time_matx,dist_matx,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,min_dist,min_time,total_num_vehicles):
 
 	# Create a table containing Customer IDs and demand of the customer in the order
 	# of individual
 	indv_table = vehicle_dist(indv,dat)
 
 	# Calculate the distance for given individual                                                 
-	act_dist, act_time, pen_time, idle_time = distance_calc(indv_table,Q,dist_matx,travel_time_matx)
+	act_dist, act_time, pen_time, idle_time, remaining = distance_calc(indv_table[:,:-1],Q,dist_matx,travel_time_matx,breakTimeStart,breakTimeEnd,endTime)
 	
+	if remaining:
+		unattendedPenalty = np.sum(indv_table[remaining:,5]) / np.sum(indv_table[:,5])
+	else:
+		unattendedPenalty = 0
+
+	if pen_time:
+		pen_ratio = 1 / pen_time
+	else:
+		pen_ratio = 0.25
+		
 	# Calculate the fitness value
-	fit_ratio = ((min_dist/total_num_vehicles)/act_dist) + (idle_time/act_time) + (idle_time/pen_time)
+	fit_ratio = ((min_dist/total_num_vehicles)/act_dist) + ((min_time/total_num_vehicles)/act_time) + pen_ratio - unattendedPenalty
 
 	return fit_ratio
 #---------------------------------------------------------------------------------------#	
