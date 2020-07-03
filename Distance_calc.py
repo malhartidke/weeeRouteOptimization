@@ -82,7 +82,7 @@ def dist_mat(tim_loc_data,main_lat,main_long):
 	matr[ul] = matr.T[ul]
 
 	# Save the distance matrix and return it
-	np.savetxt('Dist_Matrix.csv',matr,delimiter=",")
+	np.savetxt('Dist_Matrix.csv',matr,delimiter=",",header='Distance Matrix')
 	print('Distance Matrix Created and Saved......')
 	return matr
 #---------------------------------------------------------------------------------------#	
@@ -92,13 +92,14 @@ def dist_mat(tim_loc_data,main_lat,main_long):
 # dist_matrix:     Distance Matrix of all given customer nodes and depot,              #
 #                  with depot being the first entry                                    #
 # travel_time_mat: Matrix containing travel time for all edges                         #
+# valueData:       Array of values of each customer load                               #
 #                                                                                      #
 # Description of Output Parameter:                                                     #
 # edge_table:      Edge table with rows containing edges and columns containing start  #
 #                  nodes, end nodes and cost                                           #
 ########################################################################################
 
-def form_edge_table(dist_matrix, travel_time_mat):
+def form_edge_table(dist_matrix, travel_time_mat, valueData):
 
     #################################################################################
 	# Initializing the parameters                                                   #
@@ -107,7 +108,7 @@ def form_edge_table(dist_matrix, travel_time_mat):
 	#              it                                                               #
 	#################################################################################
 	n = np.size(dist_matrix,0) 
-	edge_table = np.zeros((dist_matrix.size,4))
+	edge_table = np.zeros((dist_matrix.size,5))
 	
 	dist_matrix_flat = dist_matrix.flatten()
 	travel_time_mat_flat = travel_time_mat.flatten()
@@ -121,9 +122,13 @@ def form_edge_table(dist_matrix, travel_time_mat):
 	sec_col = np.repeat(np.reshape(col_2,(1,col_2.size)),n,axis=0)
 	edge_table[:,1] = sec_col.flatten()
 	
+	valueData = np.insert(valueData,0,np.array([0]),axis=0)
+	val_col = np.repeat(np.reshape(valueData,(1,valueData.size)),n,axis=0)
+	val_col_flat = val_col.flatten()
+	edge_table[:,4] = val_col_flat/np.linalg.norm(val_col_flat)
+
 	# Repeating all elements 0 to n, n times each and putting them in first column
-	for mul in range(n):
-		edge_table[(mul*n):((mul+1)*n),0] = np.ones(n)*mul
+	edge_table[:,0] = np.repeat(col_2,n,axis=0)
 
 	# Deleting the rows with zero distance
 	edge_table = np.delete(edge_table, np.argwhere(edge_table[:,2] == 0).flatten(),axis=0)
@@ -169,6 +174,10 @@ def min_dist(matr):
 # dist_mat:        Distance matrix of all given customer nodes and depot,               #
 #                  with depot being the first entry                                     #
 # travel_time_mat: Matrix containing travel time for all edges                          #
+# breakTimeStart:  Start of break time                                                  #
+# breakTimeEnd:    End of break time                                                    #
+# endTime:         End of service time                                                  #
+# idx:             Index from where customers remain unattended                         #
 #                                                                                       #
 # Description of Output Parameters:                                                     #
 # total_dist:      Total distance travelled by all the vehicles                         #
@@ -177,7 +186,7 @@ def min_dist(matr):
 # idle_time:       Total idle time for all the vehicles                                 #                                                            #
 ######################################################################################### 
 
-def distance_calc(customer_info,capacity,dist_mat,travel_time_mat):
+def distance_calc(customer_info,capacity,dist_mat,travel_time_mat,breakTimeStart,breakTimeEnd,endTime):
 	
 	################################################################################## 
 	# Retrieving the customer data                                                   #
@@ -204,6 +213,17 @@ def distance_calc(customer_info,capacity,dist_mat,travel_time_mat):
 
 	# Looping over customers
 	for idx, c_id in enumerate(customer_id):
+
+		# Checking of overtime has occured
+		overTime = total_time - endTime
+		if overTime >= 0:
+			#print('Overtime has occured')
+			return total_dist,total_time,penalty_time,idle_time,idx
+
+		# Checking if it is break time
+		breakExtra = total_time - breakTimeStart
+		if breakExtra >= 0:
+			total_time = breakTimeEnd + breakExtra
 
 		# Check if the vehicle has reached the depot or another customer
 		if reached_home == 1:
@@ -260,7 +280,7 @@ def distance_calc(customer_info,capacity,dist_mat,travel_time_mat):
 				reached_home = 1
 				total_load = 0
 
-	return total_dist,total_time,penalty_time,idle_time
+	return total_dist,total_time,penalty_time,idle_time,0
 #---------------------------------------------------------------------------------------#
 
 '''
