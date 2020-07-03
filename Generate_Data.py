@@ -4,6 +4,7 @@ import numpy as np
 import networkx as nx
 import itertools
 import scipy.stats as stats
+import pandas as pd
 
 ############################# Generation of Data ########################################
 #                                                                                       #
@@ -53,14 +54,34 @@ def gen_data(lat,lon):
 	# Create a table with locations of customers in terms of latitude and longitude
 	service_pos_arr = np.asarray(finalNodes.iloc[randomChoiceArr,:])[:,(0,1)]
 
-	# The demand of each customer is taken at random from a normal distribution with defined mean and standard deviation
-	mu_l, sigma_l = 10,1
+	# Create a matrix of waste appliances data
+	noOfWasteTypes =  5
+	maxWasteQty = 5
+	wasteType = np.random.randint(0,5,(no_of_calls,noOfWasteTypes))
+
+	file_location = 'wasteVolumeMultipliers.csv'
+	try:
+		
+		# Reading the CSV file
+		df = pd.read_csv(file_location)
+
+	# Error Handling
+	except FileNotFoundError:
+
+		sys.exit()
+
+	#print(dict(zip(df.Appliances,df.VolumeMultiplier)))
+	volumeMultipliers = np.reshape(np.asarray(df)[:,1],(noOfWasteTypes,-1))
+	
+	# Getting customer total loads for each customer 
+	customer_load = np.matmul(wasteType, volumeMultipliers)
+	
+	# Adding uncertainity in each load
 	load_deviation = 1
-	customer_load = np.random.normal(mu_l,sigma_l,no_of_calls).astype(int)
 	load_uncertainity_add = np.add(customer_load,load_deviation)
 	load_uncertainity_sub = np.subtract(customer_load,load_deviation)
 	customer_load = np.append(np.reshape(load_uncertainity_sub,(-1,1)),np.reshape(load_uncertainity_add,(-1,1)),axis=1)
-
+	
 	# Get the number of working hours including the break hour 
 	no_of_working_hrs = 9
 	# Get the start time, break time and duration of break time in 24 hrs format
@@ -86,12 +107,13 @@ def gen_data(lat,lon):
 	tim_loc_data = np.append(service_pos_arr,np.reshape(start_times,(-1,1)),axis=1)
 	tim_loc_data = np.append(tim_loc_data,np.reshape(end_times,(-1,1)),axis=1)
 	tim_loc_data = np.concatenate((tim_loc_data,customer_load),axis=1)
+	tim_loc_data = np.concatenate((tim_loc_data,wasteType),axis=1)
 	tim_loc_data = np.insert(tim_loc_data,0,customer_id,axis=1)
 
 	try:
 		
 		# Save the table	
-		np.savetxt("time_loc_data.csv",tim_loc_data,delimiter=",")
+		np.savetxt("time_loc_data.csv",tim_loc_data,delimiter=",",header="Customer ID,Longitude,Latitude,Service Start Time, Service End Time, Minimum Load, Maximum Load, Fridge, Washing Machine, TV, Computer, Mobile Phones")
 	
 	except PermissionError:
 		print("The file is being used in another program or by another user. Please close the file and run this program again")
@@ -101,7 +123,6 @@ def gen_data(lat,lon):
 
 	print('CSV file generated succesfully...........')
 	return tim_loc_data
-
 
 if __name__ == '__main__':
 	a = gen_data(26.9921975,75.7840554)
