@@ -14,33 +14,54 @@ from deap import base, creator, tools
 
 def main(toolbox):
     
-
+    print('\nLoading Data Files')
     lat = 26.9921975
     lon = 75.7840554
 
-    # Variable storing the location of file with file name
+    # Variable storing the location of files with file name
     file_location = 'time_loc_data.csv'
-    file_locationM = 'Dist_Matrix.csv'                                                
+    file_locationM = 'Dist_Matrix.csv'
+    file_locationApp = 'wasteVolumeMultipliers.csv'
+    file_locationTime = 'BreakTimes.csv'                                                
 
     try:
         
-        # Reading the CSV file
+        # Reading the CSV files
         df = pd.read_csv(file_location)
         dfM = pd.read_csv(file_locationM)
+        dfApp = pd.read_csv(file_locationApp)
+        dfTime = pd.read_csv(file_locationTime)
 
     # Error Handling
     except FileNotFoundError:                                                     
         
+        print('\nThere was problem in loading files. Please check the name of files.')   
         sys.exit()
 
-    call_data = np.array(df)
+    print('Files loaded succesfully')
+
+    raw_call_data = np.array(df)
     dis_mat = np.array(dfM)
+    wasteValues = np.asarray(dfApp)[:,2]
+    breakTimes = np.asarray(dfTime)[:,1]
+
+    # Creating and appending value of Loads
+    wasteValues = np.reshape(wasteValues,(wasteValues.size,-1))
+    loadValue = np.matmul(raw_call_data[:,7:12], wasteValues)
+    call_data = np.append(raw_call_data[:,0:7],loadValue,axis=1)
+
+    #np.savetxt('tim_loc_dataValues.csv',call_data,delimiter=",")
+
+    # Calculating Break Start and End Times and Service End Time
+    breakTimeStart = (breakTimes[2] - breakTimes[1])*60
+    breakTimeEnd = breakTimeStart + (breakTimes[3]*60)
+    endTime = breakTimes[0]*60
 
     # Calculating Travel Time Matrix
-    travel_time_mat = dis_mat/20
-        
+    travel_time_mat = dis_mat/333.3333
+    
     # Run the SGA Algorithm
-    best, best_fitness_value = run_sga(call_data, dis_mat, travel_time_mat, lat, lon, toolbox)
+    best, best_fitness_value = run_sga(call_data, dis_mat, travel_time_mat, lat, lon, breakTimeStart, breakTimeEnd, endTime, toolbox)
 
     print("\nBest individual is %s, %s" % (best, best_fitness_value))
 
@@ -68,7 +89,7 @@ def main(toolbox):
 # Creating a class 'FitnessMax' based on class 'base.Fitness'
 # with the objective of maximizing single fitness value which
 # is denoted by positive single value of weight
-creator.create("FitnessMax", base.Fitness, weights=(-1.0,))
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 
 # Creating a class 'Individual' as a numpy array
 # whose fitness is defined by the 'FitnessMax' class
