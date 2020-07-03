@@ -10,7 +10,7 @@ import numpy as np
 #########################################################################################
 def give_individual():
     
-    param = np.zeros(9)
+    param = np.zeros(10)
     
     param[0] = np.random.random()                
     param[1] = np.random.random()
@@ -19,8 +19,9 @@ def give_individual():
     param[4] = np.random.random()
     param[5] = np.random.random()
     param[6] = np.random.random()
-    param[7] = np.random.randint(2,3,1)
-    param[8] = np.random.randint(2,3,1)
+    param[7] = np.random.random()
+    param[8] = np.random.randint(2,20,1)
+    param[9] = np.random.randint(2,20,1)
     
     return(param)
 #---------------------------------------------------------------------------------------#
