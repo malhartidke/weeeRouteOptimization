@@ -22,7 +22,7 @@ def sel_comp(edge_table,start_loc,exploit_allow):
 	init_loc_idx = np.argwhere(edge_table[:,0] == start_loc).flatten()
 
 	# Get the desirability
-	desirability = edge_table[:,4]
+	desirability = edge_table[:,6]
 
 	# Check if only one edge is remaining with the given start location
 	if init_loc_idx.size == 1:
@@ -113,10 +113,14 @@ def give_individual(c_id,n,edge_table,exploit_allow):
 #  popsize_limit:           Maximum limit on the size of population                     #
 #  dist_matrix:             Distance matrix of all given customer nodes and depot,      #
 #                           with depot being the first entry                            #
+#  breakTimeStart:          Start of break time                                         #
+#  breakTimeEnd:            End of break time                                           #
+#  endTime:                 End of service time                                         #
 #  lat:                     Latitude of Depot                                           #
 #  long:                    Longitude of Depot                                          #
 #  Q:                       Capacity of each vehicle                                    #
 #  init_min_dist:           Optimistic Distance                                         #
+#  init_min_time:           Optimistic Time to complete service                         #
 #  exploit_allow:           Parameter for allowance exploitation                        #
 #  total_num_vehicles:      Total number of vehicles                                    #
 #                                                                                       #
@@ -128,7 +132,7 @@ def give_individual(c_id,n,edge_table,exploit_allow):
 #                                                                                       #
 #########################################################################################
 
-def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_limit,dist_matrix,lat,lon,Q,init_min_dist,exploit_allow,total_num_vehicles):
+def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_limit,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,exploit_allow,total_num_vehicles):
 	
 	#print('Forming the population')
 	
@@ -144,7 +148,7 @@ def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_l
 
 	# Initializing a random individual as best solution and calculating its fitness
 	Best_indv = give_individual(c_id,num_vehicles,edge_table,exploit_allow)
-	best_fitness_ = fitness_func(Best_indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,Q,init_min_dist,total_num_vehicles)
+	best_fitness_ = fitness_func(Best_indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,total_num_vehicles)
 
 	# Looping until the population limit is reached
 	while popsize < popsize_limit:
@@ -156,7 +160,7 @@ def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_l
 			#indv = dmut(indv)
 			
 			# Calculate the fitness value of the individual
-			fitness = fitness_func(indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,Q,init_min_dist,total_num_vehicles)
+			fitness = fitness_func(indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,total_num_vehicles)
 
 			# Check if the obtained indivudal has higher fitness than best individual
 			if fitness >= best_fitness_:
