@@ -1,0 +1,2 @@
+Mating Parameter q,Crossover Parameter delta_max,Crossover Parameter q,SGA Tournament Size,CXTP,MUTPB,Hall of Fame Size,SGA Max Population Size,SGA Generations,ACO Population Limit,"ACO Max No, of Iterations"
+5,0.1,5,2,0.8,0.2,4,40,100,20,10

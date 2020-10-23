@@ -24,7 +24,7 @@ def gen_data(lat,lon):
 	print('\nGenerating CSV file..........')
 	
 	# Load the graph
-	fp = 'VKI.graphml'
+	fp = 'Sitapura.graphml'
 	graph = ox.load_graphml(fp)
 
 	# Remove the isolated nodes

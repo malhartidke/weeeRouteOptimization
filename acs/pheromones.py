@@ -31,7 +31,7 @@ def cap_phermones(edge_table,beta,gamma,pop):
 			# required end location
 			req_idx = np.argwhere(np.isin(edge_table[start_loc_idx,1],end))[:,0]
 
-			edge_table[req_idx,4] = (1-beta)*edge_table[req_idx,4] + beta*gamma
+			edge_table[req_idx,6] = (1-beta)*edge_table[req_idx,6] + beta*gamma
 
 	return edge_table
 #---------------------------------------------------------------------------------------# 
@@ -65,7 +65,7 @@ def increase_phermones(edge_table,best_Indv,bestFitness,alpha):
 		req_idx = np.argwhere(np.isin(edge_table[start_loc_idx,1],end))[:,0]
 		
 		# Update the edge where both locations match
-		edge_table[req_idx,4] = (1-alpha)*edge_table[req_idx,4] + alpha*bestFitness
+		edge_table[req_idx,6] = (1-alpha)*edge_table[req_idx,6] + alpha*bestFitness
 	
 	return edge_table
 #---------------------------------------------------------------------------------------#

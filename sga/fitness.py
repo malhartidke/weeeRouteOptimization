@@ -8,7 +8,10 @@ from acs.cvrp import run_aco
 #  loc_dat:                 Input data containing                                       #
 #                           1. Customer ID,                                             #
 #                           2. Location of customer in terms of Latitude and Longitude  #
-#                           3. Demand                                                   #
+#                           3. Start and End Time intervals                             #
+#                           4. Demand                                                   #
+#                           5. Value of the load at customer                            #
+#                           6. Environmental value of load at the customer              # 
 #                           (Modified after removing customers which are visited)       #
 #  distances:               Distance matrix of all given customer nodes and depot,      #
 #                           with depot being the first entry                            #
@@ -23,14 +26,14 @@ from acs.cvrp import run_aco
 #  total_val:               Fitness value of the individual                             #
 #                                                                                       #
 #########################################################################################
-def fitness_func(design_vec,loc_data,distances,travel_time_mat,pos_lat,pos_long,breakTimeStart,breakTimeEnd,endTime):
+def fitness_func(design_vec,loc_data,distances,travel_time_mat,pos_lat,pos_long,capacity,max_num_vehicles,breakTimeStart,breakTimeEnd,endTime):
 
     # Intitializing the Variables
     #min_final_penal = max_final_penal = 0
     #max_pop_penalty = 0.1
     #max_iter_penalty = 0.1
     
-    prod = run_aco(loc_data,distances,travel_time_mat,pos_lat,pos_long,breakTimeStart,breakTimeEnd,endTime,design_vec[:8],np.absolute(design_vec[8:10].astype(int)))                  # Calculate the output                         
+    prod = run_aco(loc_data,distances,travel_time_mat,pos_lat,pos_long,capacity,max_num_vehicles,breakTimeStart,breakTimeEnd,endTime,design_vec[:9],np.absolute(design_vec[9:11].astype(int)))                  # Calculate the output                         
     
     # Calculating the total value of output
     total_val = prod

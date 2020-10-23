@@ -10,6 +10,8 @@ from Distance_calc import distance_calc
 #                           2. Location of customer in terms of Latitude and Longitude  #
 #                           3. Start and End Time intervals                             #
 #                           4. Demand                                                   #
+#                           5. Value of the load at customer                            #
+#                           6. Environmental value of load at the customer              # 
 #                           (Modified after removing customers which are visited)       #
 #                                                                                       #
 #  Description of Output Parameters:                                                    #
@@ -22,7 +24,7 @@ from Distance_calc import distance_calc
 def vehicle_dist(c_id_route,tim_loc_data):
 
 	# Initialize empty table
-	vehicle_table = np.zeros((c_id_route.size,6))
+	vehicle_table = np.zeros((c_id_route.size,7))
 	
 	idx = 0
 
@@ -39,7 +41,7 @@ def vehicle_dist(c_id_route,tim_loc_data):
 			row_copy = np.asarray(np.where(tim_loc_data[:,0] == c_id))[0][0]
 
 			# Copy the obtained data in vehicle table
-			vehicle_table[idx,:] = tim_loc_data[row_copy,(0,3,4,5,6,7)]
+			vehicle_table[idx,:] = tim_loc_data[row_copy,(0,3,4,5,6,7,8)]
 
 
 	# Delete all zeros in the vehicle table
@@ -57,6 +59,8 @@ def vehicle_dist(c_id_route,tim_loc_data):
 #                           2. Location of customer in terms of Latitude and Longitude  #
 #                           3. Start and End Time intervals                             #
 #                           4. Demand                                                   #
+#                           5. Value of the load at customer                            #
+#                           6. Environmental value of load at the customer              # 
 #                           (Modified after removing customers which are visited)       #
 #  travel_time_mat:         Matrix containing travel time for all edges                 #
 #  dist_matx:               Distance matrix of all given customer nodes and depot,      #
@@ -69,13 +73,13 @@ def vehicle_dist(c_id_route,tim_loc_data):
 #  Q:                       Capacity of each vehicle                                    #
 #  min_dist:                Optimistic Distance                                         #
 #  min_time:                Optimistic Time to complete service                         #
-#  total_num_vehicles:      Total number of vehicles                                    #
+#  max_num_vehicles:        Total number of vehicles                                    #
 #                                                                                       #
 #  Description of Output Parameters:                                                    #
 #  fit_ratio:               Fitness value of the individual                             #
 #                                                                                       #
 #########################################################################################
-def fitness_func(indv,dat,travel_time_matx,dist_matx,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,min_dist,min_time,total_num_vehicles):
+def fitness_func(indv,dat,travel_time_matx,dist_matx,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,min_dist,min_time,max_num_vehicles):
 
 	# Create a table containing Customer IDs and demand of the customer in the order
 	# of individual
@@ -86,8 +90,10 @@ def fitness_func(indv,dat,travel_time_matx,dist_matx,lat,lon,breakTimeStart,brea
 	
 	if remaining:
 		unattendedPenalty = np.sum(indv_table[remaining:,5]) / np.sum(indv_table[:,5])
+		unattendedEnvPenalty = np.sum(indv_table[remaining:,6]) / np.sum(indv_table[:,6])
 	else:
 		unattendedPenalty = 0
+		unattendedEnvPenalty = 0
 
 	if pen_time:
 		pen_ratio = 1 / pen_time
@@ -95,7 +101,7 @@ def fitness_func(indv,dat,travel_time_matx,dist_matx,lat,lon,breakTimeStart,brea
 		pen_ratio = 0.25
 		
 	# Calculate the fitness value
-	fit_ratio = ((min_dist/total_num_vehicles)/act_dist) + ((min_time/total_num_vehicles)/act_time) + pen_ratio - unattendedPenalty
+	fit_ratio = ((min_dist/max_num_vehicles)/act_dist) + ((min_time/max_num_vehicles)/act_time) + pen_ratio - unattendedPenalty - unattendedEnvPenalty
 
 	return fit_ratio
 #---------------------------------------------------------------------------------------#	

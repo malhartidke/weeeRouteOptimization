@@ -22,7 +22,7 @@ def sel_comp(edge_table,start_loc,exploit_allow):
 	init_loc_idx = np.argwhere(edge_table[:,0] == start_loc).flatten()
 
 	# Get the desirability
-	desirability = edge_table[:,6]
+	desirability = edge_table[:,7]
 
 	# Check if only one edge is remaining with the given start location
 	if init_loc_idx.size == 1:
@@ -77,7 +77,7 @@ def give_individual(c_id,n,edge_table,exploit_allow):
 	for i in range(ind_len):
 
 		# Get the desirability of all edges from edge table
-		desirability = edge_table[:,4].flatten()
+		desirability = edge_table[:,7].flatten()
 
 		# Check if we are selecting from the depot
 		if i == 0:
@@ -105,6 +105,8 @@ def give_individual(c_id,n,edge_table,exploit_allow):
 #                           2. Location of customer in terms of Latitude and Longitude  #
 #                           3. Start and End Time intervals                             #
 #                           4. Demand                                                   #
+#                           5. Value of the load at customer                            #
+#                           6. Environmental value of load at the customer              # 
 #                           (Modified after removing customers which are visited)       #
 #  travel_time_mat:         Matrix containing travel time for all edges                 #  
 #  c_id:                    Customer ID                                                 #
@@ -122,7 +124,7 @@ def give_individual(c_id,n,edge_table,exploit_allow):
 #  init_min_dist:           Optimistic Distance                                         #
 #  init_min_time:           Optimistic Time to complete service                         #
 #  exploit_allow:           Parameter for allowance exploitation                        #
-#  total_num_vehicles:      Total number of vehicles                                    #
+#  max_num_vehicles:        Total number of vehicles                                    #
 #                                                                                       #
 #  Description of Output Parameters:                                                    #
 #  pop_:                    Population Formed                                           #
@@ -132,7 +134,7 @@ def give_individual(c_id,n,edge_table,exploit_allow):
 #                                                                                       #
 #########################################################################################
 
-def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_limit,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,exploit_allow,total_num_vehicles):
+def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_limit,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,exploit_allow,max_num_vehicles):
 	
 	#print('Forming the population')
 	
@@ -148,7 +150,7 @@ def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_l
 
 	# Initializing a random individual as best solution and calculating its fitness
 	Best_indv = give_individual(c_id,num_vehicles,edge_table,exploit_allow)
-	best_fitness_ = fitness_func(Best_indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,total_num_vehicles)
+	best_fitness_ = fitness_func(Best_indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,max_num_vehicles)
 
 	# Looping until the population limit is reached
 	while popsize < popsize_limit:
@@ -160,7 +162,7 @@ def pop_form(tim_loc_data,travel_time_mat,c_id,num_vehicles,edge_table,popsize_l
 			#indv = dmut(indv)
 			
 			# Calculate the fitness value of the individual
-			fitness = fitness_func(indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,total_num_vehicles)
+			fitness = fitness_func(indv,tim_loc_data,travel_time_mat,dist_matrix,lat,lon,breakTimeStart,breakTimeEnd,endTime,Q,init_min_dist,init_min_time,max_num_vehicles)
 
 			# Check if the obtained indivudal has higher fitness than best individual
 			if fitness >= best_fitness_:

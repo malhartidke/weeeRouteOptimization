@@ -8,21 +8,25 @@ from .population import sel_comp, give_individual, pop_form
 from .pheromones import cap_phermones, increase_phermones
 from .fitness import fitness_func, vehicle_dist
 import warnings
-#import pandas as pd
+import pandas as pd
 
 ###################### Implementation of ACS algorithm ##################################
 #                                                                                       #
 #  Description of Input Parameters:                                                     #
 #  tim_loc_data:            Input data containing                                       #
-#                           1. Customer ID,                                             #
+#                           1. Customer ID                                              #
 #                           2. Location of customer in terms of Latitude and Longitude  #
 #                           3. Start and End Time intervals                             #
 #                           4. Demand                                                   #
+#                           5. Value of the load at customer                            #
+#                           6. Environmental value of load at the customer              # 
 #  dist_matrix:             Distance matrix of all given customer nodes and depot,      #
 #                           with depot being the first entry                            #
 #  travel_time_mat:         Matrix containing travel time for all edges                 #
 #  main_lat:                Latitude of Depot                                           #
 #  main_long:               Longitude of Depot                                          #
+#  max_num_vehicles:        Maximum number of vehicles available                        #
+#  capacity:                Maximum volume capacity of each vehicle                     #
 #  param_f:                 Set of input parameters for the ACS algorithm               #
 #  param_int:               Set of iteration limits for the ACS algorithm               #
 #                           1. Limit on Maximum population,                             #
@@ -37,7 +41,7 @@ import warnings
 #                                                                                       #
 #########################################################################################
 
-def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTimeStart,breakTimeEnd,endTime,param_f,param_int):
+def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,capacity,max_num_vehicles,breakTimeStart,breakTimeEnd,endTime,param_f,param_int,finalPrint=0):
 
 	# Catching warnings as exceptions
 	warnings.filterwarnings("error")
@@ -51,14 +55,6 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 	popsize_limit = param_int[0]
 	max_num_iter = param_int[1]
 
-	##################################################################################
-	# Defining problem specific parameters                                           #
-	# capacity:       Maximum volume capacity of each vehicle                        #
-	# num_vehicles:   Maximum number of vehicles available                           #
-	##################################################################################
-	capacity = 150
-	num_vehicles = 5
-
     ##################################################################################
 	# Retrieving the parameters for ACS                                              #
 	# Refer the report for significance of each parameter                            #
@@ -70,7 +66,8 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 	gamma = param_f[4]
 	eta = param_f[5]
 	zeta = param_f[6]
-	exploit_allow = param_f[7]
+	omega = param_f[7]
+	exploit_allow = param_f[8]
 
 	# Initializing the iterations parameters
 	vehicle_num = 0
@@ -109,7 +106,7 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 	'''
 
 	# Forming the edge table
-	edge_table = form_edge_table(dist_matrix, travel_time_mat, tim_loc_data[:,7])
+	edge_table = form_edge_table(dist_matrix, travel_time_mat, tim_loc_data[:,7], tim_loc_data[:,8])
 	no_of_calls = tim_loc_data[:,0].size
 	edge_table_size = edge_table[:,2].size
 	
@@ -122,7 +119,7 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 	edge_table_cpy = np.append(edge_table_cpy,desirability,axis=1)
 
 	#Looping over the vehicles
-	for vehicle_num in range(num_vehicles):
+	for vehicle_num in range(max_num_vehicles):
 
 		#print('\nForming solution for vehicle number %d' % (vehicle_num+1))
 		
@@ -130,7 +127,7 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 		if max_num_iter == 0:
 
 			# If they are, get the first selected population
-			pop,pop_fitness,best_indv,best_fitness = pop_form(tim_loc_data,travel_time_mat,tim_loc_data_cpy[:,0],(num_vehicles-vehicle_num),edge_table_cpy,popsize_limit,dist_matrix,main_lat,main_long,breakTimeStart,breakTimeEnd,endTime,capacity,init_min_dist,init_min_time,exploit_allow,num_vehicles) 	
+			pop,pop_fitness,best_indv,best_fitness = pop_form(tim_loc_data,travel_time_mat,tim_loc_data_cpy[:,0],(max_num_vehicles-vehicle_num),edge_table_cpy,popsize_limit,dist_matrix,main_lat,main_long,breakTimeStart,breakTimeEnd,endTime,capacity,init_min_dist,init_min_time,exploit_allow,max_num_vehicles) 	
 
 		else:
 
@@ -139,7 +136,7 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 				#print('For iteration no. %d' %(num_iter+1))
 
 				# Form the population
-				pop,pop_fitness,best_indv,best_fitness = pop_form(tim_loc_data,travel_time_mat,tim_loc_data_cpy[:,0],(num_vehicles-vehicle_num),edge_table_cpy,popsize_limit,dist_matrix,main_lat,main_long,breakTimeStart,breakTimeEnd,endTime,capacity,init_min_dist,init_min_time,exploit_allow,num_vehicles)			
+				pop,pop_fitness,best_indv,best_fitness = pop_form(tim_loc_data,travel_time_mat,tim_loc_data_cpy[:,0],(max_num_vehicles-vehicle_num),edge_table_cpy,popsize_limit,dist_matrix,main_lat,main_long,breakTimeStart,breakTimeEnd,endTime,capacity,init_min_dist,init_min_time,exploit_allow,max_num_vehicles)			
 				
 				# Decrease the pheromone value of all edges
 				edge_table_cpy = cap_phermones(edge_table_cpy,beta,gamma,pop)
@@ -148,16 +145,16 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 				edge_table_cpy = increase_phermones(edge_table_cpy,best_indv,best_fitness,alpha)
 				
 				# Normalizing Pheromones
-				edge_table_cpy[:,5] = edge_table_cpy[:,5] / np.linalg.norm(edge_table_cpy[:,5])
+				edge_table_cpy[:,6] = edge_table_cpy[:,6] / np.linalg.norm(edge_table_cpy[:,6])
 
 				# Calculate new desirability
 				try:
-					desirability = np.divide(np.multiply(np.power(edge_table_cpy[:,5],delta),np.power(edge_table_cpy[:,4],zeta)),np.multiply(np.power(edge_table_cpy[:,3],eta),np.power(edge_table_cpy[:,2],epsilon)))
+					desirability = np.divide(np.multiply(np.multiply(np.power(edge_table_cpy[:,6],delta),np.power(edge_table_cpy[:,4],zeta)),np.power(edge_table_cpy[:,5],omega)),np.multiply(np.power(edge_table_cpy[:,3],eta),np.power(edge_table_cpy[:,2],epsilon)))
 				except RuntimeWarning:
 					return 1e-5
 				
 				# Update the desirability
-				edge_table_cpy[:,6] = desirability
+				edge_table_cpy[:,7] = desirability
 
 				# Block for saving the initial edge table or after each vehicle
 				#if num_iter == 0 & vehicle_num == 0:
@@ -176,18 +173,19 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 		
 		# If it is iteration for first vehicle, initialize empty solution 
 		if vehicle_num == 0:
-			best_sol = np.zeros((num_vehicles,best_indv.size))
-			best_sol_fitness = np.zeros(num_vehicles)
+			best_sol = np.zeros((max_num_vehicles,best_indv.size))
+			best_sol_fitness = np.zeros(max_num_vehicles)
 		
 		# Copy the best individual into the final best solution
 		best_sol[vehicle_num,0:best_indv.size] = best_indv
 		best_sol_fitness[vehicle_num] = best_fitness
 
 	# Calculate the distance covered by each vehicle
-	best_sol_dist = np.zeros((num_vehicles,4))
+	best_sol_dist = np.zeros((max_num_vehicles,4))
 	unAttended = []
 	unAttendedCount = 0
 	valueLost = 0
+	envValueLost = 0
 	for vehc_route in best_sol:
 		best_sol_table = vehicle_dist(vehc_route,tim_loc_data)
 		best_sol_dist[vech_iter,0],best_sol_dist[vech_iter,1],best_sol_dist[vech_iter,2],best_sol_dist[vech_iter,3],idx = distance_calc(best_sol_table,capacity,dist_matrix,travel_time_mat,breakTimeStart,breakTimeEnd,endTime)
@@ -195,59 +193,67 @@ def run_aco(tim_loc_data,dist_matrix,travel_time_mat,main_lat,main_long,breakTim
 			unAttendedCount += best_sol_table[idx:,0].size
 			unAttended.append(best_sol_table[idx:,0].astype(int).tolist())
 			valueLost += np.sum(best_sol_table[idx:,5])
+			envValueLost += np.sum(best_sol_table[idx:,6])
 		else:
 			unAttended.append([0])
 		vech_iter = vech_iter + 1
 	best_sol_dist = np.around(best_sol_dist,3)
 	
-	'''
-	# Print and save the best solution
-	best_sol = best_sol.astype(int)
-	dfbest = pd.DataFrame(best_sol)
-	dfbest.to_csv('best_sol.csv')
-	print('\nRoute taken by each vehicle is:')
-	print(dfbest)
-	print('\n')
-	print('Unattended Customers by each vehicle are:')
-	for route in enumerate(unAttended):
-		print(route)
-	print('\n')
-	dfdist = pd.DataFrame(best_sol_dist, columns=['Total Distance Travelled','Total Time','Penalty Time','Idle Time'])
-	dfdist.to_csv('best_sol_dist.csv')
-	print(dfdist)
-	'''
+	if finalPrint == 1:
+
+		# Print and save the best solution
+		best_sol = best_sol.astype(int)
+		dfbest = pd.DataFrame(best_sol)
+		dfbest.to_csv('best_sol.csv')
+		print('\nRoute taken by each vehicle is:')
+		print(dfbest)
+		print('\n')
+		print('Unattended Customers by each vehicle are:')
+		for route in enumerate(unAttended):
+			print(route)
+		print('\n')
+		dfdist = pd.DataFrame(best_sol_dist, columns=['Total Distance Travelled','Total Time','Penalty Time','Idle Time'])
+		dfdist.to_csv('best_sol_dist.csv')
+		print(dfdist)
+	
 
 	final_dist = np.sum(best_sol_dist[:,0])
 	final_time = np.sum(best_sol_dist[:,1])
 	avg_penalty = np.average(best_sol_dist[:,2])
 	avg_idle = np.average(best_sol_dist[:,3])
 
-	'''
-	# Sum the distance/time of each vehicle and return it
-	print('Final Distance is: %f' %final_dist)
-	print('Total Time is: %f' %final_time)
-	print('Average Penalty Time is: %f' %avg_penalty)
-	print('Average Idle Time is: %f' %avg_idle)
-	print('No. of Unattended Customers is: %d' %unAttendedCount)
-	print('Total Value lost is: %f' %valueLost)
-	'''
+	if finalPrint == 1:
+		# Sum the distance/time of each vehicle and return it
+		print('\nFinal Distance is: %f' %final_dist)
+		print('Total Time is: %f' %final_time)
+		print('Average Penalty Time is: %f' %avg_penalty)
+		print('Average Idle Time is: %f' %avg_idle)
+		print('No. of Unattended Customers is: %d' %unAttendedCount)
+		print('Total Value lost is: %f' %valueLost)
+		print('Total Environmental Value lost is: %f' %envValueLost)
+	
 
 	# Checking for division by zeros
 	if valueLost:
-		unattendedPenalty = 1 / valueLost
+		unattendedPenalty = (1 / valueLost)
 	else:
 		unattendedPenalty = 0.25
 
-	if avg_penalty:
-		penlatyRatio = init_min_time/(avg_penalty*25)
+	if envValueLost:
+		unattendedEnvPenalty = (1 / envValueLost)
 	else:
-		penlatyRatio = 0.25
+		unattendedEnvPenalty = 0.25
+
+	if avg_penalty:
+		penaltyRatio = init_min_time/(avg_penalty*25)
+	else:
+		penaltyRatio = 0.25
 
 	# Calculate Fitness of solution
-	avg_fit = (init_min_dist/final_dist) + (init_min_time / final_time) + penlatyRatio + unattendedPenalty
-	#print('The average fitness value is: %f' %avg_fit)
+	avg_fit = (init_min_dist/final_dist) + (init_min_time / final_time) + penaltyRatio + unattendedPenalty + unattendedEnvPenalty
+	# print('The average fitness value is: %f' %avg_fit)
 	
-	#print('\nIndividual Evaluation Complete')
+	# print('\nIndividual Evaluation Complete')
 
 	return avg_fit
 #---------------------------------------------------------------------------------------#

@@ -1,6 +1,6 @@
-Appliances,VolumeMultiplier,ValueMultiplier
-Fridge,10,10
-Washing Machine,8.5,5
-TV,6.5,15
-Computers,5,10
-Mobile Phones,1,6
+Appliances,VolumeMultiplier,ValueMultiplier,EnvironmentMultiplier
+Fridge,1.34,450,3
+Washing Machine,0.29,600,2
+TV,0.16,2000,4
+Computers,0.09,1200,5
+Mobile Phones,7.8E-05,200,1

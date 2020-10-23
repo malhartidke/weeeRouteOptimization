@@ -93,13 +93,14 @@ def dist_mat(tim_loc_data,main_lat,main_long):
 #                  with depot being the first entry                                    #
 # travel_time_mat: Matrix containing travel time for all edges                         #
 # valueData:       Array of values of each customer load                               #
+# valueData:       Array of environmental values of each customer load                 #
 #                                                                                      #
 # Description of Output Parameter:                                                     #
 # edge_table:      Edge table with rows containing edges and columns containing start  #
 #                  nodes, end nodes and cost                                           #
 ########################################################################################
 
-def form_edge_table(dist_matrix, travel_time_mat, valueData):
+def form_edge_table(dist_matrix, travel_time_mat, valueData, envValueData):
 
     #################################################################################
 	# Initializing the parameters                                                   #
@@ -108,7 +109,7 @@ def form_edge_table(dist_matrix, travel_time_mat, valueData):
 	#              it                                                               #
 	#################################################################################
 	n = np.size(dist_matrix,0) 
-	edge_table = np.zeros((dist_matrix.size,5))
+	edge_table = np.zeros((dist_matrix.size,6))
 	
 	dist_matrix_flat = dist_matrix.flatten()
 	travel_time_mat_flat = travel_time_mat.flatten()
@@ -126,6 +127,11 @@ def form_edge_table(dist_matrix, travel_time_mat, valueData):
 	val_col = np.repeat(np.reshape(valueData,(1,valueData.size)),n,axis=0)
 	val_col_flat = val_col.flatten()
 	edge_table[:,4] = val_col_flat/np.linalg.norm(val_col_flat)
+
+	envValueData = np.insert(envValueData,0,np.array([0]),axis=0)
+	env_val_col = np.repeat(np.reshape(envValueData,(1,envValueData.size)),n,axis=0)
+	env_val_col_flat = env_val_col.flatten()
+	edge_table[:,5] = env_val_col_flat/np.linalg.norm(env_val_col_flat)
 
 	# Repeating all elements 0 to n, n times each and putting them in first column
 	edge_table[:,0] = np.repeat(col_2,n,axis=0)
@@ -283,6 +289,7 @@ def distance_calc(customer_info,capacity,dist_mat,travel_time_mat,breakTimeStart
 	return total_dist,total_time,penalty_time,idle_time,0
 #---------------------------------------------------------------------------------------#
 
+## File Test Code ##
 '''
 if __name__ == '__main__':
 	import pandas as pd

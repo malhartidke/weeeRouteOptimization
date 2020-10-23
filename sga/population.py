@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 ###################### Formation of Individual for SGA ##################################
 #                                                                                       #
@@ -10,8 +11,10 @@ import numpy as np
 #########################################################################################
 def give_individual():
     
-    param = np.zeros(10)
-    
+    param = np.zeros(11)
+    file_locationParameters = 'parameters.csv'
+    dfParam = pd.read_csv(file_locationParameters)
+
     param[0] = np.random.random()                
     param[1] = np.random.random()
     param[2] = np.random.random()
@@ -20,8 +23,9 @@ def give_individual():
     param[5] = np.random.random()
     param[6] = np.random.random()
     param[7] = np.random.random()
-    param[8] = np.random.randint(2,20,1)
-    param[9] = np.random.randint(2,20,1)
+    param[8] = np.random.random()
+    param[9] = np.random.randint(2,dfParam['ACO Population Limit'][0].astype(int),1)
+    param[10] = np.random.randint(2,dfParam['ACO Max No, of Iterations'][0].astype(int),1)
     
     return(param)
 #---------------------------------------------------------------------------------------#
